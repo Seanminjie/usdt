@@ -1,0 +1,33 @@
+{
+  "name": "usdt-salary-monitor",
+  "version": "1.3.0",
+  "description": "USDT工资监控系统 - 监控和分析员工USDT工资接收情况的工具",
+  "main": "usdt_monitor.js",
+  "scripts": {
+    "start": "node usdt_monitor.js",
+    "dev": "node usdt_monitor.js",
+    "install-deps": "npm install",
+    "convert-excel": "node read_excel.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "express": "^4.18.2",
+    "multer": "^1.4.5-lts.1",
+    "xlsx": "^0.18.5"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "keywords": [
+    "usdt",
+    "salary",
+    "monitor",
+    "blockchain",
+    "tron",
+    "excel",
+    "upload",
+    "responsive"
+  ],
+  "author": "USDT Monitor Team",
+  "license": "MIT"
+}

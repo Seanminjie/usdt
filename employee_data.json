@@ -1,0 +1,414 @@
+[
+  {
+    "__EMPTY": "Richard",
+    "部门": "办公室",
+    "基本薪资（usdt）": 5000,
+    "实发薪资（usdt）": 5000,
+    "备注": 5000,
+    "地址": "TTYhfQ3VyYJxXhRPpwFJDVbRmJfVd96XAz"
+  },
+  {
+    "__EMPTY": "Sean",
+    "基本薪资（usdt）": 5000,
+    "实发薪资（usdt）": 5000,
+    "备注": 5000,
+    "地址": "TL1pops2bFbBriCCCEX2eZidNb6UFQRKpe"
+  },
+  {
+    "__EMPTY": "Yining",
+    "基本薪资（usdt）": 5000,
+    "实发薪资（usdt）": 5000,
+    "备注": 5000,
+    "地址": "TVeCMFNDdu3QyrnkYAhwENJjfUVL8dGPo7"
+  },
+  {
+    "__EMPTY": "Zack",
+    "基本薪资（usdt）": 5000,
+    "实发薪资（usdt）": 5000,
+    "备注": 5000,
+    "地址": "TZFbrLvwSvMp1z1Bntw2kuYnxRn8CUvwXo"
+  },
+  {
+    "__EMPTY": "Arno",
+    "岗位": "技术",
+    "基本薪资（usdt）": 8000,
+    "实发薪资（usdt）": 8000,
+    "备注": 8000,
+    "地址": "TXR1oUF52KGbX3AQTK2HA43V1N75nk259p"
+  },
+  {
+    "__EMPTY": "郑州公司部分",
+    "部门": "郑州办公室",
+    "实发薪资（usdt）": 65683,
+    "地址": "TTMxF21ZWqipRmfEaHARx75grJR1jqDXwr"
+  },
+  {
+    "__EMPTY": "王俊磊",
+    "基本薪资（usdt）": 460,
+    "实发薪资（usdt）": 460,
+    "地址": "TDyssYLzy42Hf3GCWGrof1qgAeDPhhUxwm"
+  },
+  {
+    "__EMPTY": "程强",
+    "基本薪资（usdt）": 460,
+    "实发薪资（usdt）": 460,
+    "地址": "TQL8iZAzYa2dmkJEhfyPe4sauC9kznb1cj"
+  },
+  {
+    "__EMPTY": "宋凌风",
+    "基本薪资（usdt）": 840,
+    "实发薪资（usdt）": 840,
+    "地址": "TJaM5B2f6FvzyPvcWCvp94667CSrA31SBP"
+  },
+  {
+    "__EMPTY": "关玺",
+    "基本薪资（usdt）": 3200,
+    "实发薪资（usdt）": 3200,
+    "地址": "TSZhTQsHzg1FAmoRB4vqWYLCBNPjgWEgu4"
+  },
+  {
+    "__EMPTY": "尹腾霄",
+    "基本薪资（usdt）": 840,
+    "实发薪资（usdt）": 840,
+    "地址": "TZDPytZLivMUMWWworfjhBFoshYV83QvQU"
+  },
+  {
+    "__EMPTY": "喻聪聪",
+    "基本薪资（usdt）": 1390,
+    "实发薪资（usdt）": 1390,
+    "地址": "TXbgGggkzTWemuEQ2Yyn45Hwxb9PFR2gf9"
+  },
+  {
+    "__EMPTY": "李阳阳",
+    "基本薪资（usdt）": 420,
+    "实发薪资（usdt）": 420,
+    "地址": "TWQ32hAE8WQGKwoDDeeYGrQZyDTmHyTdmx"
+  },
+  {
+    "__EMPTY": "qichen",
+    "基本薪资（usdt）": 3500,
+    "实发薪资（usdt）": 0
+  },
+  {
+    "__EMPTY": "张贝贝",
+    "基本薪资（usdt）": 0,
+    "实发薪资（usdt）": 0
+  },
+  {
+    "__EMPTY": "陈志文",
+    "基本薪资（usdt）": 0,
+    "实发薪资（usdt）": 0
+  },
+  {
+    "__EMPTY": "毛杰",
+    "基本薪资（usdt）": 0,
+    "实发薪资（usdt）": 0
+  },
+  {
+    "__EMPTY": "Wincent",
+    "部门": "开发",
+    "岗位": "技术",
+    "职能": "产品经理",
+    "基本薪资（usdt）": 7000,
+    "实发薪资（usdt）": 7000,
+    "地址": "TYd9g9Du2578CU6p8NNJ8tu4jsEfgBVi7C"
+  },
+  {
+    "__EMPTY": "kk",
+    "岗位": "技术",
+    "职能": "前端",
+    "基本薪资（usdt）": 2500,
+    "实发薪资（usdt）": 2500,
+    "地址": "TTB3g6p3KN34hjP2da6Q7oZ8V6VWDAEvfM"
+  },
+  {
+    "__EMPTY": "小天",
+    "岗位": "技术",
+    "职能": "flutter开发",
+    "基本薪资（usdt）": 2750,
+    "实发薪资（usdt）": 3500,
+    "备注": 3500,
+    "地址": "TFLbdpoQ4Pr8rHGKdxV9KeB7y8qFyjMbCq"
+  },
+  {
+    "__EMPTY": "jufei",
+    "岗位": "技术",
+    "职能": "flutter开发",
+    "基本薪资（usdt）": 1800,
+    "实发薪资（usdt）": 1800,
+    "地址": "TJgoKSvVpxLb54qj1pAcPpXqar9ccDXdrd"
+  },
+  {
+    "__EMPTY": "sam",
+    "岗位": "技术",
+    "职能": "钱包开发",
+    "基本薪资（usdt）": 3450,
+    "实发薪资（usdt）": 4500,
+    "备注": 4500,
+    "地址": "TLE8Dsaz2AXGBxZKrWETb8TK2TNwZRKzDA"
+  },
+  {
+    "__EMPTY": "淑争",
+    "岗位": "技术",
+    "职能": "测试",
+    "基本薪资（usdt）": 2800,
+    "实发薪资（usdt）": 3000,
+    "备注": 3000,
+    "地址": "TKfZezw46k3mEJQ2pEgSATRgmnAdZHMKTW"
+  },
+  {
+    "__EMPTY": "Joan",
+    "岗位": "技术",
+    "基本薪资（usdt）": 4700,
+    "实发薪资（usdt）": 4700,
+    "地址": "TY7XjxfznTxVkUGCNukEC4sAvdKSvF6RNm"
+  },
+  {
+    "__EMPTY": "Peter",
+    "岗位": "技术",
+    "职能": "运维(外部人员）",
+    "基本薪资（usdt）": 4000,
+    "实发薪资（usdt）": 4000,
+    "地址": "TDJAFWQQbBERjugAL8e2aeAymzJz6v1bwT"
+  },
+  {
+    "__EMPTY": "andy",
+    "岗位": "技术",
+    "基本薪资（usdt）": 8000,
+    "实发薪资（usdt）": 8000,
+    "地址": "TL7XUAc2a8dEfjCM2o4zDG6v9YFV5j3Qn1"
+  },
+  {
+    "__EMPTY": "bill鹏鹏",
+    "岗位": "技术",
+    "基本薪资（usdt）": 6300,
+    "实发薪资（usdt）": 6300,
+    "地址": "TN4wFLAhAEedxh7wnDfewhLZsY1TQLudBs"
+  },
+  {
+    "__EMPTY": "Tracy",
+    "部门": "运营",
+    "岗位": "运营",
+    "职能": "品牌运营",
+    "基本薪资（usdt）": 2900,
+    "实发薪资（usdt）": 2900,
+    "地址": "TV3Md5zjtQzqWFhXzYk51isrVFf7jfW4gY"
+  },
+  {
+    "__EMPTY": "Kim",
+    "岗位": "运营",
+    "职能": "社群运营",
+    "基本薪资（usdt）": 2200,
+    "实发薪资（usdt）": 2200,
+    "地址": "TP5sGgJFiJ9jmbLQwZi1jGP3CQYcL7YXpb"
+  },
+  {
+    "__EMPTY": "lumi",
+    "岗位": "运营",
+    "职能": "产品运营",
+    "基本薪资（usdt）": 2500,
+    "实发薪资（usdt）": 2500,
+    "地址": "TETkStS6TQGCZw6CqbDDcFFUWZPJs6jRsR"
+  },
+  {
+    "__EMPTY": "lulu",
+    "岗位": "运营",
+    "职能": "内容运营",
+    "基本薪资（usdt）": 1800,
+    "实发薪资（usdt）": 1800,
+    "地址": "TEKkeSXAkWgxgwyqrCd4FZBYYovLMTruhG"
+  },
+  {
+    "__EMPTY": "miya",
+    "岗位": "运营",
+    "职能": "商务",
+    "基本薪资（usdt）": 2100,
+    "实发薪资（usdt）": 2100,
+    "地址": "TRc4XZ8EhZ32ZQJ3eHCqhoPCU8QTLwmpX3"
+  },
+  {
+    "__EMPTY": "Jyy",
+    "岗位": "设计师",
+    "职能": "设计师",
+    "基本薪资（usdt）": 1650,
+    "实发薪资（usdt）": 1650,
+    "地址": "TS9Yx8tiVXb9Zm7vAx6tYyiZoutL2PgU1e"
+  },
+  {
+    "__EMPTY": "rick",
+    "岗位": "设计师",
+    "基本薪资（usdt）": 1400,
+    "实发薪资（usdt）": 1400,
+    "地址": "TPQPtA3A8CLLYpEkkDEab388q8U5R5Pc3V"
+  },
+  {
+    "__EMPTY": "lee",
+    "岗位": "设计师",
+    "基本薪资（usdt）": 1550,
+    "实发薪资（usdt）": 1550,
+    "地址": "TWDszRyZ7t1fUWMv9nFByLfmTTP1THD3so"
+  },
+  {
+    "__EMPTY": "Johnny",
+    "岗位": "客服",
+    "基本薪资（usdt）": 1800,
+    "实发薪资（usdt）": 1800,
+    "地址": "TPy2LGb1M44CPcxLrRYLu1PjeKr4vZXeBe"
+  },
+  {
+    "__EMPTY": "julie",
+    "岗位": "客服",
+    "基本薪资（usdt）": 1500,
+    "实发薪资（usdt）": 1500,
+    "地址": "TGj1x33d93U6RWuofSBaALvLEoAtc7JBdw"
+  },
+  {
+    "__EMPTY": "Kaycee",
+    "岗位": "客服",
+    "基本薪资（usdt）": 700,
+    "实发薪资（usdt）": 700,
+    "地址": "TAbKX9XzXrVXogR8gM3YPFXcqjy3f1ewQZ"
+  },
+  {
+    "__EMPTY": "yy",
+    "岗位": "讲师",
+    "基本薪资（usdt）": 4150,
+    "实发薪资（usdt）": 4150,
+    "地址": "TH7zncNZQUoM97FHgjQAaTC9sQUWsGagmw"
+  },
+  {
+    "__EMPTY": "Lily",
+    "岗位": "运营",
+    "基本薪资（usdt）": 2000,
+    "实发薪资（usdt）": 2000,
+    "地址": "TG7JyLYCrkCgwGB6kk2TQe7r6sDWKskfQ2"
+  },
+  {
+    "__EMPTY": "Amei",
+    "岗位": "运营",
+    "基本薪资（usdt）": 2600,
+    "实发薪资（usdt）": 2600,
+    "地址": "TPxhTPkwqNPr2DBm39Z6ZhAYt3oK2w79JY"
+  },
+  {
+    "__EMPTY": "Mark",
+    "岗位": "运营",
+    "基本薪资（usdt）": 2000,
+    "实发薪资（usdt）": 2000,
+    "地址": "TMRhczQWYYkZqqor2fJujfPAf8TUGXdrRc"
+  },
+  {
+    "__EMPTY": "Yonnie",
+    "岗位": "运营",
+    "基本薪资（usdt）": 1500,
+    "实发薪资（usdt）": 1500,
+    "地址": "TC38neBnc6ayLvtKD12qG1jQjmVcSPwSUH"
+  },
+  {
+    "__EMPTY": " Spencer",
+    "岗位": "运营",
+    "基本薪资（usdt）": 1500,
+    "实发薪资（usdt）": 1500,
+    "地址": "TQnPyVyhgnmVwQF8jFz6r4Ju4e1VyqSkhC"
+  },
+  {
+    "__EMPTY": "Yuki",
+    "岗位": "运营",
+    "基本薪资（usdt）": 2000,
+    "实发薪资（usdt）": 2000,
+    "地址": "TMW5RsKBe2KjBqC3uiC2jDH7Lmwn2XT4oJ"
+  },
+  {
+    "__EMPTY": "Carrie",
+    "岗位": "运营",
+    "基本薪资（usdt）": 2000,
+    "实发薪资（usdt）": 2000,
+    "地址": "TXtoGLTBQuZdTeYb42biNZfu8p1oaZBjLK"
+  },
+  {
+    "__EMPTY": "weekend",
+    "岗位": "运营",
+    "基本薪资（usdt）": 1000,
+    "实发薪资（usdt）": 1000,
+    "地址": "TR2JTz5Zc7MWkt8KNxoGvWy38MswQcWDGv"
+  },
+  {
+    "__EMPTY": "zoey",
+    "岗位": "运营",
+    "基本薪资（usdt）": 1000,
+    "实发薪资（usdt）": 1000,
+    "地址": "TVCME16AKc3QZxn4ZPiZ14x6sZFzQDccbS"
+  },
+  {
+    "__EMPTY": "jolin",
+    "岗位": "运营",
+    "基本薪资（usdt）": 1500,
+    "实发薪资（usdt）": 1500,
+    "地址": "TRxAPEs6w1v1Lb1eDDwv72L4Ms51DmDY2N"
+  },
+  {
+    "__EMPTY": "Nancy",
+    "岗位": "运营",
+    "基本薪资（usdt）": 1500,
+    "实发薪资（usdt）": 1500,
+    "地址": "TKKZzH6oijZLvwMo3Gs2ZoaiPYYDRixcaF"
+  },
+  {
+    "__EMPTY": "Alex",
+    "岗位": "运营",
+    "基本薪资（usdt）": 2000,
+    "实发薪资（usdt）": 2000,
+    "地址": "TUADQ4tJdoPp8Mdq1M6ghFnfepy5qJQvHB"
+  },
+  {
+    "__EMPTY": "moli",
+    "岗位": "运营",
+    "基本薪资（usdt）": 1000,
+    "实发薪资（usdt）": 1000,
+    "地址": "TPTic9zzrEXcoRhGJUyAxfAk4tCdsZ9gYS"
+  },
+  {
+    "__EMPTY": "gakpo",
+    "岗位": "运营",
+    "基本薪资（usdt）": 1000,
+    "实发薪资（usdt）": 1000,
+    "地址": "TF7vAYrRMR2RHQGnNhEHxGaA2cKrVoF1Vi"
+  },
+  {
+    "__EMPTY": "zeta",
+    "岗位": "运营",
+    "基本薪资（usdt）": 1500,
+    "实发薪资（usdt）": 1500,
+    "地址": "TG5cPWgc1cfAcKHKAPmqsLdHN1C3zwzw6G"
+  },
+  {
+    "__EMPTY": "老胡团队",
+    "部门": "支持",
+    "岗位": "上海办公室",
+    "基本薪资（usdt）": 4000,
+    "实发薪资（usdt）": 4000
+  },
+  {
+    "__EMPTY": "小丰",
+    "基本薪资（usdt）": 3000,
+    "实发薪资（usdt）": 3000
+  },
+  {
+    "__EMPTY": "王亮",
+    "岗位": "北美",
+    "基本薪资（usdt）": 0
+  },
+  {
+    "__EMPTY": "中华",
+    "岗位": "日本",
+    "基本薪资（usdt）": 0
+  },
+  {
+    "__EMPTY": "TOTAL"
+  },
+  {
+    "部门": "工资",
+    "岗位": "USDT",
+    "职能": "RMB"
+  }
+]

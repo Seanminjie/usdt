@@ -1,0 +1,1402 @@
+
+  <!DOCTYPE html>
+  <html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>USDT工资监控系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+      body { padding: 20px; }
+      .status-pending { color: orange; font-weight: bold; }
+      .status-confirmed { color: green; font-weight: bold; }
+      .status-failed { color: red; font-weight: bold; }
+      .dashboard-card { margin-bottom: 20px; }
+      .action-buttons { margin-top: 20px; }
+      .other-currency-row { background-color: #f8f9fa; } /* 其他币种行的背景色 */
+      .not-current-month-row { background-color: #ffe6e6; } /* 非当月记录的背景色 */
+      .amount-difference-row { background-color: #e6f7ff; } /* 金额有差异的背景色 */
+      
+      /* 表格样式优化 */
+      table.table th {
+        background-color: #f0f0f0;
+        vertical-align: middle;
+        text-align: center;
+      }
+      table.table td {
+        vertical-align: middle;
+      }
+      /* 确保按钮容器有足够的宽度 */
+      table.table td:last-child {
+        min-width: 200px;
+      }
+      
+      /* 金额差异提示 */
+      .amount-higher { color: #52c41a; } /* 实收金额高于应发金额 */
+      .amount-lower { color: #f5222d; } /* 实收金额低于应发金额 */
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1 class="mb-4">USDT工资监控系统</h1>
+      
+      <div class="row">
+        <div class="col-md-4">
+          <div class="card dashboard-card">
+            <div class="card-body">
+              <h5 class="card-title">总员工数</h5>
+              <h2 id="total-employees">50</h2>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card dashboard-card">
+            <div class="card-body">
+              <h5 class="card-title">已确认收款</h5>
+              <h2 id="confirmed-count">0</h2>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card dashboard-card">
+            <div class="card-body">
+              <h5 class="card-title">待确认收款</h5>
+              <h2 id="pending-count">50</h2>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-buttons">
+        <button id="check-all" class="btn btn-primary">检查所有交易</button>
+        <button id="export-report" class="btn btn-success ms-2">导出报告</button>
+        <button id="upload-btn" class="btn btn-warning ms-2" data-bs-toggle="modal" data-bs-target="#uploadModal">导入新表单</button>
+      </div>
+      
+      <!-- 文件上传模态框 -->
+      <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="uploadModalLabel">导入新的工资表单</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <form id="uploadForm" enctype="multipart/form-data">
+                <div class="mb-3">
+                  <label for="excelFile" class="form-label">选择Excel文件 (.xlsx)</label>
+                  <input type="file" class="form-control" id="excelFile" name="excelFile" accept=".xlsx" required>
+                  <div class="form-text">请选择包含员工工资信息的Excel文件，格式应与现有表单一致。</div>
+                </div>
+                <div class="alert alert-info">
+                  <strong>注意：</strong>
+                  <ul class="mb-0">
+                    <li>文件格式必须为 .xlsx</li>
+                    <li>表格应包含：员工姓名、部门、实发薪资（usdt）、地址等列</li>
+                    <li>上传后将替换当前的员工数据</li>
+                    <li>建议先备份当前数据</li>
+                  </ul>
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+              <button type="button" class="btn btn-primary" id="uploadSubmit">上传并导入</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="mt-3 mb-3 p-3 border rounded bg-light">
+        <h5>颜色说明：</h5>
+        <div class="row">
+          <div class="col-md-3">
+            <div class="p-2 other-currency-row">其他币种支付</div>
+          </div>
+          <div class="col-md-3">
+            <div class="p-2 not-current-month-row">非当月交易记录</div>
+          </div>
+          <div class="col-md-3">
+            <div class="p-2 amount-difference-row">金额有差异</div>
+          </div>
+          <div class="col-md-3">
+            <div><span class="amount-higher">高于预期金额</span> / <span class="amount-lower">低于预期金额</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <input type="text" id="search-input" class="form-control mb-3" placeholder="搜索员工姓名或地址...">
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="checkbox" id="show-other-currency">
+          <label class="form-check-label" for="show-other-currency">
+            显示其他币种支付的员工
+          </label>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th width="10%">员工姓名</th>
+                <th width="10%">部门</th>
+                <th width="10%">应发金额(USDT)</th>
+                <th width="15%">USDT地址</th>
+                <th width="8%">状态</th>
+                <th width="12%">交易哈希</th>
+                <th width="10%">实收金额</th>
+                <th width="10%">交易时间</th>
+                <th width="15%">操作</th>
+              </tr>
+            </thead>
+            <tbody id="employee-table">
+              
+    <tr data-index="0" class="other-currency-row">
+      <td>Richard</td>
+      <td>办公室</td>
+      <td>5000</td>
+      <td><a href="https://tronscan.org/#/address/TTYhfQ3VyYJxXhRPpwFJDVbRmJfVd96XAz" target="_blank">TTYhfQ3VyYJxXhRPpwFJDVbRmJfVd96XAz</a></td>
+      <td class="status-confirmed">手工确认</td>
+      <td><a href="https://tronscan.org/#/transaction/abe593f61229bd1ea4d8116c335eaa388bb30df792c26ed061198ab038512af1" target="_blank">abe593f612...</a></td>
+      <td class="">5000 (低于预期)</td>
+      <td>2025/7/23 00:35:07</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TTYhfQ3VyYJxXhRPpwFJDVbRmJfVd96XAz">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="0">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="1" class="other-currency-row">
+      <td>Sean</td>
+      <td>-</td>
+      <td>5000</td>
+      <td><a href="https://tronscan.org/#/address/TL1pops2bFbBriCCCEX2eZidNb6UFQRKpe" target="_blank">TL1pops2bFbBriCCCEX2eZidNb6UFQRKpe</a></td>
+      <td class="status-confirmed">手工确认</td>
+      <td><a href="https://tronscan.org/#/transaction/c6ee10197afb1973d95cb18ab0a27276f24b8094e01e9867fd8d2f81ef9a70a9" target="_blank">c6ee10197a...</a></td>
+      <td class="">5000 (低于预期)</td>
+      <td>2025/7/23 00:35:04</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TL1pops2bFbBriCCCEX2eZidNb6UFQRKpe">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="1">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="2" class="">
+      <td>Yining</td>
+      <td>-</td>
+      <td>5000</td>
+      <td><a href="https://tronscan.org/#/address/TVeCMFNDdu3QyrnkYAhwENJjfUVL8dGPo7" target="_blank">TVeCMFNDdu3QyrnkYAhwENJjfUVL8dGPo7</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/aaed50f3667a17c3b8a9b92e32e2ebf4f62c4f142bc0c5512c91538131f4c770" target="_blank">aaed50f366...</a></td>
+      <td class="">5000 </td>
+      <td>2025/7/15 14:24:39</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TVeCMFNDdu3QyrnkYAhwENJjfUVL8dGPo7">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="2">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="3" class="other-currency-row">
+      <td>Zack</td>
+      <td>-</td>
+      <td>5000</td>
+      <td><a href="https://tronscan.org/#/address/TZFbrLvwSvMp1z1Bntw2kuYnxRn8CUvwXo" target="_blank">TZFbrLvwSvMp1z1Bntw2kuYnxRn8CUvwXo</a></td>
+      <td class="status-confirmed">手工确认</td>
+      <td><a href="https://tronscan.org/#/transaction/e64e36396374b2e92a377199dd1906bff5cb955b07db71a6859a914e7bfb6362" target="_blank">e64e363963...</a></td>
+      <td class="">5000 </td>
+      <td>2025/7/23 00:34:59</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TZFbrLvwSvMp1z1Bntw2kuYnxRn8CUvwXo">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="3">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="4" class="">
+      <td>Arno</td>
+      <td>-</td>
+      <td>8000</td>
+      <td><a href="https://tronscan.org/#/address/TXR1oUF52KGbX3AQTK2HA43V1N75nk259p" target="_blank">TXR1oUF52KGbX3AQTK2HA43V1N75nk259p</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/8082fbd754d73a32941c50d2354534b0ef500974f1074be7ff03da05d81c3c19" target="_blank">8082fbd754...</a></td>
+      <td class="">8000 </td>
+      <td>2025/7/15 14:08:57</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TXR1oUF52KGbX3AQTK2HA43V1N75nk259p">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="4">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="5" class="other-currency-row">
+      <td>郑州公司部分</td>
+      <td>郑州办公室</td>
+      <td>65683</td>
+      <td><a href="https://tronscan.org/#/address/TTMxF21ZWqipRmfEaHARx75grJR1jqDXwr" target="_blank">TTMxF21ZWqipRmfEaHARx75grJR1jqDXwr</a></td>
+      <td class="status-confirmed">手工确认</td>
+      <td><a href="https://tronscan.org/#/transaction/52ee525fab9571929bfe445f09fada87b7c95616625c4ed8a160407cff03661e" target="_blank">52ee525fab...</a></td>
+      <td class="">65683 (低于预期)</td>
+      <td>2025/7/23 00:35:09</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TTMxF21ZWqipRmfEaHARx75grJR1jqDXwr">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="5">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="6" class="">
+      <td>王俊磊</td>
+      <td>-</td>
+      <td>460</td>
+      <td><a href="https://tronscan.org/#/address/TDyssYLzy42Hf3GCWGrof1qgAeDPhhUxwm" target="_blank">TDyssYLzy42Hf3GCWGrof1qgAeDPhhUxwm</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/ade9f13d1f8827b67855365f04c8b3441f81981a944f9fc0487c55f8b309f51f" target="_blank">ade9f13d1f...</a></td>
+      <td class="">460 </td>
+      <td>2025/7/15 14:09:39</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TDyssYLzy42Hf3GCWGrof1qgAeDPhhUxwm">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="6">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="7" class="">
+      <td>程强</td>
+      <td>-</td>
+      <td>460</td>
+      <td><a href="https://tronscan.org/#/address/TQL8iZAzYa2dmkJEhfyPe4sauC9kznb1cj" target="_blank">TQL8iZAzYa2dmkJEhfyPe4sauC9kznb1cj</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/8b48c0fa67451ac45328077c5562c7038880dc305aa2027c1ce971804e52dcad" target="_blank">8b48c0fa67...</a></td>
+      <td class="">460 </td>
+      <td>2025/7/15 14:10:18</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TQL8iZAzYa2dmkJEhfyPe4sauC9kznb1cj">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="7">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="8" class="">
+      <td>宋凌风</td>
+      <td>-</td>
+      <td>840</td>
+      <td><a href="https://tronscan.org/#/address/TJaM5B2f6FvzyPvcWCvp94667CSrA31SBP" target="_blank">TJaM5B2f6FvzyPvcWCvp94667CSrA31SBP</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/8f7b1f5707c16c68d4236d100ceceafaad4f84952188173a648d0b86444bcf38" target="_blank">8f7b1f5707...</a></td>
+      <td class="">840 </td>
+      <td>2025/7/15 14:10:48</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TJaM5B2f6FvzyPvcWCvp94667CSrA31SBP">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="8">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="9" class="">
+      <td>关玺</td>
+      <td>-</td>
+      <td>3200</td>
+      <td><a href="https://tronscan.org/#/address/TSZhTQsHzg1FAmoRB4vqWYLCBNPjgWEgu4" target="_blank">TSZhTQsHzg1FAmoRB4vqWYLCBNPjgWEgu4</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/1caae5db47595e2dec9a01f754f1d903e15666eac10cd473b7226f821389e1de" target="_blank">1caae5db47...</a></td>
+      <td class="">3200 </td>
+      <td>2025/7/15 14:11:30</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TSZhTQsHzg1FAmoRB4vqWYLCBNPjgWEgu4">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="9">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="10" class="">
+      <td>尹腾霄</td>
+      <td>-</td>
+      <td>840</td>
+      <td><a href="https://tronscan.org/#/address/TZDPytZLivMUMWWworfjhBFoshYV83QvQU" target="_blank">TZDPytZLivMUMWWworfjhBFoshYV83QvQU</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/d4035f59a683db38884b3c950f9c95650f457a398b8fafd1ccdf09eda375ec9b" target="_blank">d4035f59a6...</a></td>
+      <td class="">840 </td>
+      <td>2025/7/15 14:12:00</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TZDPytZLivMUMWWworfjhBFoshYV83QvQU">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="10">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="11" class="">
+      <td>喻聪聪</td>
+      <td>-</td>
+      <td>1390</td>
+      <td><a href="https://tronscan.org/#/address/TXbgGggkzTWemuEQ2Yyn45Hwxb9PFR2gf9" target="_blank">TXbgGggkzTWemuEQ2Yyn45Hwxb9PFR2gf9</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/40f8d157e2642a58ddb0c2297063b893b050c2614af5edfa4aab72385fed943d" target="_blank">40f8d157e2...</a></td>
+      <td class="">1390 </td>
+      <td>2025/7/15 14:12:33</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TXbgGggkzTWemuEQ2Yyn45Hwxb9PFR2gf9">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="11">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="12" class="">
+      <td>李阳阳</td>
+      <td>-</td>
+      <td>420</td>
+      <td><a href="https://tronscan.org/#/address/TWQ32hAE8WQGKwoDDeeYGrQZyDTmHyTdmx" target="_blank">TWQ32hAE8WQGKwoDDeeYGrQZyDTmHyTdmx</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/3781076268154d4cbd6ea1fb453726761f8af41353c43af6c225c02ab9b53cdd" target="_blank">3781076268...</a></td>
+      <td class="">420 </td>
+      <td>2025/7/15 14:13:09</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TWQ32hAE8WQGKwoDDeeYGrQZyDTmHyTdmx">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="12">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="13" class="other-currency-row">
+      <td>Wincent</td>
+      <td>开发</td>
+      <td>7000</td>
+      <td><a href="https://tronscan.org/#/address/TYd9g9Du2578CU6p8NNJ8tu4jsEfgBVi7C" target="_blank">TYd9g9Du2578CU6p8NNJ8tu4jsEfgBVi7C</a></td>
+      <td class="status-confirmed">手工确认</td>
+      <td><a href="https://tronscan.org/#/transaction/015ed7d637da8193a0c535d1009541df7e203425777d0ffffd8cf5a7790401e5" target="_blank">015ed7d637...</a></td>
+      <td class="">7000 (低于预期)</td>
+      <td>2025/7/23 00:35:21</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TYd9g9Du2578CU6p8NNJ8tu4jsEfgBVi7C">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="13">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="14" class="">
+      <td>kk</td>
+      <td>-</td>
+      <td>2500</td>
+      <td><a href="https://tronscan.org/#/address/TTB3g6p3KN34hjP2da6Q7oZ8V6VWDAEvfM" target="_blank">TTB3g6p3KN34hjP2da6Q7oZ8V6VWDAEvfM</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/2362f0e4d3a6f4ffa86b5a6a3f0cf4559535b2fe3efb95411fc1db75323515dd" target="_blank">2362f0e4d3...</a></td>
+      <td class="">2500 </td>
+      <td>2025/7/15 14:13:45</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TTB3g6p3KN34hjP2da6Q7oZ8V6VWDAEvfM">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="14">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="15" class="">
+      <td>小天</td>
+      <td>-</td>
+      <td>3500</td>
+      <td><a href="https://tronscan.org/#/address/TFLbdpoQ4Pr8rHGKdxV9KeB7y8qFyjMbCq" target="_blank">TFLbdpoQ4Pr8rHGKdxV9KeB7y8qFyjMbCq</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/0434c8f3cc4f581148d506448b2bdd0ad38349b30e36414b0168e73de2465455" target="_blank">0434c8f3cc...</a></td>
+      <td class="">3500 </td>
+      <td>2025/7/15 14:14:15</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TFLbdpoQ4Pr8rHGKdxV9KeB7y8qFyjMbCq">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="15">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="16" class="other-currency-row">
+      <td>jufei</td>
+      <td>-</td>
+      <td>1800</td>
+      <td><a href="https://tronscan.org/#/address/TJgoKSvVpxLb54qj1pAcPpXqar9ccDXdrd" target="_blank">TJgoKSvVpxLb54qj1pAcPpXqar9ccDXdrd</a></td>
+      <td class="status-confirmed">手工确认</td>
+      <td><a href="https://tronscan.org/#/transaction/1d01db25fc74226f1218c0e00fb1b30e379656e97ade321dbfc5a08ed9e187be" target="_blank">1d01db25fc...</a></td>
+      <td class="">1800 (低于预期)</td>
+      <td>2025/7/23 00:35:24</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TJgoKSvVpxLb54qj1pAcPpXqar9ccDXdrd">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="16">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="17" class="other-currency-row">
+      <td>sam</td>
+      <td>-</td>
+      <td>4500</td>
+      <td><a href="https://tronscan.org/#/address/TLE8Dsaz2AXGBxZKrWETb8TK2TNwZRKzDA" target="_blank">TLE8Dsaz2AXGBxZKrWETb8TK2TNwZRKzDA</a></td>
+      <td class="status-confirmed">手工确认</td>
+      <td><a href="https://tronscan.org/#/transaction/8f321e977208d8542f900d9c4f42528a20372183635379134a67c713b16f0e65" target="_blank">8f321e9772...</a></td>
+      <td class="">4500 (低于预期)</td>
+      <td>2025/7/23 00:35:26</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TLE8Dsaz2AXGBxZKrWETb8TK2TNwZRKzDA">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="17">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="18" class="other-currency-row">
+      <td>淑争</td>
+      <td>-</td>
+      <td>3000</td>
+      <td><a href="https://tronscan.org/#/address/TKfZezw46k3mEJQ2pEgSATRgmnAdZHMKTW" target="_blank">TKfZezw46k3mEJQ2pEgSATRgmnAdZHMKTW</a></td>
+      <td class="status-confirmed">手工确认</td>
+      <td><a href="https://tronscan.org/#/transaction/3007ee8ac33fc1ce3dcf9fe38318c9c677dcad560a59896301c6cccd4ebe9c4c" target="_blank">3007ee8ac3...</a></td>
+      <td class="">3000 (低于预期)</td>
+      <td>2025/7/23 00:35:28</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TKfZezw46k3mEJQ2pEgSATRgmnAdZHMKTW">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="18">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="19" class="other-currency-row">
+      <td>Joan</td>
+      <td>-</td>
+      <td>4700</td>
+      <td><a href="https://tronscan.org/#/address/TY7XjxfznTxVkUGCNukEC4sAvdKSvF6RNm" target="_blank">TY7XjxfznTxVkUGCNukEC4sAvdKSvF6RNm</a></td>
+      <td class="status-confirmed">手工确认</td>
+      <td><a href="https://tronscan.org/#/transaction/720b78cd909c80554ef33d310b814d5598198eeeb0fa96b14786715ddb44a042" target="_blank">720b78cd90...</a></td>
+      <td class="">4700 (低于预期)</td>
+      <td>2025/7/23 00:35:30</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TY7XjxfznTxVkUGCNukEC4sAvdKSvF6RNm">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="19">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="20" class="">
+      <td>Peter</td>
+      <td>-</td>
+      <td>4000</td>
+      <td><a href="https://tronscan.org/#/address/TDJAFWQQbBERjugAL8e2aeAymzJz6v1bwT" target="_blank">TDJAFWQQbBERjugAL8e2aeAymzJz6v1bwT</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/93079053758fadd88407261be8ac844eb5a701158da9e402d9e8475ec88dcec1" target="_blank">9307905375...</a></td>
+      <td class="">4000 </td>
+      <td>2025/7/22 23:19:06</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TDJAFWQQbBERjugAL8e2aeAymzJz6v1bwT">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="20">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="21" class="other-currency-row">
+      <td>andy</td>
+      <td>-</td>
+      <td>8000</td>
+      <td><a href="https://tronscan.org/#/address/TL7XUAc2a8dEfjCM2o4zDG6v9YFV5j3Qn1" target="_blank">TL7XUAc2a8dEfjCM2o4zDG6v9YFV5j3Qn1</a></td>
+      <td class="status-confirmed">手工确认</td>
+      <td><a href="https://tronscan.org/#/transaction/ffa16fadd38b9f0714bda837ca5253124102d63cc6c1fbcb6c84661fa553aae7" target="_blank">ffa16fadd3...</a></td>
+      <td class="">8000 (低于预期)</td>
+      <td>2025/7/23 00:35:44</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TL7XUAc2a8dEfjCM2o4zDG6v9YFV5j3Qn1">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="21">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="22" class="other-currency-row">
+      <td>bill鹏鹏</td>
+      <td>-</td>
+      <td>6300</td>
+      <td><a href="https://tronscan.org/#/address/TN4wFLAhAEedxh7wnDfewhLZsY1TQLudBs" target="_blank">TN4wFLAhAEedxh7wnDfewhLZsY1TQLudBs</a></td>
+      <td class="status-confirmed">手工确认</td>
+      <td><a href="https://tronscan.org/#/transaction/113a40e1b2b335a42445f9cd5cb24b90af366ed84783427671debc839243927b" target="_blank">113a40e1b2...</a></td>
+      <td class="">6300 (低于预期)</td>
+      <td>2025/7/23 00:35:46</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TN4wFLAhAEedxh7wnDfewhLZsY1TQLudBs">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="22">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="23" class="">
+      <td>Tracy</td>
+      <td>运营</td>
+      <td>2900</td>
+      <td><a href="https://tronscan.org/#/address/TV3Md5zjtQzqWFhXzYk51isrVFf7jfW4gY" target="_blank">TV3Md5zjtQzqWFhXzYk51isrVFf7jfW4gY</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/a6adcf018abcf3c35615c5b82bd44f257da6dd9ad1fbf1ed3801b74f3e746a71" target="_blank">a6adcf018a...</a></td>
+      <td class="">2900 </td>
+      <td>2025/7/15 14:15:18</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TV3Md5zjtQzqWFhXzYk51isrVFf7jfW4gY">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="23">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="24" class="">
+      <td>Kim</td>
+      <td>-</td>
+      <td>2200</td>
+      <td><a href="https://tronscan.org/#/address/TP5sGgJFiJ9jmbLQwZi1jGP3CQYcL7YXpb" target="_blank">TP5sGgJFiJ9jmbLQwZi1jGP3CQYcL7YXpb</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/6da3934f82e1773693e8526b264bb2b5ddbf774325b6201d58bd15bf6ff1d95c" target="_blank">6da3934f82...</a></td>
+      <td class="">2200 </td>
+      <td>2025/7/15 14:15:51</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TP5sGgJFiJ9jmbLQwZi1jGP3CQYcL7YXpb">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="24">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="25" class="">
+      <td>lumi</td>
+      <td>-</td>
+      <td>2500</td>
+      <td><a href="https://tronscan.org/#/address/TETkStS6TQGCZw6CqbDDcFFUWZPJs6jRsR" target="_blank">TETkStS6TQGCZw6CqbDDcFFUWZPJs6jRsR</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/2fdc642177065e0923ce6f13ec66ec9b0b2e85fb31ad948fdd010bd4b927144c" target="_blank">2fdc642177...</a></td>
+      <td class="">2500 </td>
+      <td>2025/7/15 14:16:24</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TETkStS6TQGCZw6CqbDDcFFUWZPJs6jRsR">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="25">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="26" class="">
+      <td>lulu</td>
+      <td>-</td>
+      <td>1800</td>
+      <td><a href="https://tronscan.org/#/address/TEKkeSXAkWgxgwyqrCd4FZBYYovLMTruhG" target="_blank">TEKkeSXAkWgxgwyqrCd4FZBYYovLMTruhG</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/3497e430c9fcdc9c70bc03ac98dd3b841f79a40927a17c51c6e5ae7233f869f9" target="_blank">3497e430c9...</a></td>
+      <td class="">1800 </td>
+      <td>2025/7/15 14:16:54</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TEKkeSXAkWgxgwyqrCd4FZBYYovLMTruhG">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="26">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="27" class="">
+      <td>miya</td>
+      <td>-</td>
+      <td>2100</td>
+      <td><a href="https://tronscan.org/#/address/TRc4XZ8EhZ32ZQJ3eHCqhoPCU8QTLwmpX3" target="_blank">TRc4XZ8EhZ32ZQJ3eHCqhoPCU8QTLwmpX3</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/ab9cccdfbea36fb5dfb652f7b168c31bb51ee15f882caa1385dc3a82f6d176f9" target="_blank">ab9cccdfbe...</a></td>
+      <td class="">2100 </td>
+      <td>2025/7/15 14:17:33</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TRc4XZ8EhZ32ZQJ3eHCqhoPCU8QTLwmpX3">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="27">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="28" class="other-currency-row">
+      <td>Jyy</td>
+      <td>-</td>
+      <td>1650</td>
+      <td><a href="https://tronscan.org/#/address/TS9Yx8tiVXb9Zm7vAx6tYyiZoutL2PgU1e" target="_blank">TS9Yx8tiVXb9Zm7vAx6tYyiZoutL2PgU1e</a></td>
+      <td class="status-confirmed">手工确认</td>
+      <td><a href="https://tronscan.org/#/transaction/9f5d26d5200b52f71ca75a4471ff4ceca499bcd4dd6406e8779e38fc79ea3582" target="_blank">9f5d26d520...</a></td>
+      <td class="">1650 (低于预期)</td>
+      <td>2025/7/23 00:35:50</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TS9Yx8tiVXb9Zm7vAx6tYyiZoutL2PgU1e">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="28">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="29" class="">
+      <td>rick</td>
+      <td>-</td>
+      <td>1400</td>
+      <td><a href="https://tronscan.org/#/address/TPQPtA3A8CLLYpEkkDEab388q8U5R5Pc3V" target="_blank">TPQPtA3A8CLLYpEkkDEab388q8U5R5Pc3V</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/0e7ef4e9f80370d5454c0fcf065da9afe51df80fc1c92ec4bdab00441aa1084b" target="_blank">0e7ef4e9f8...</a></td>
+      <td class="">1400 </td>
+      <td>2025/7/18 17:22:45</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TPQPtA3A8CLLYpEkkDEab388q8U5R5Pc3V">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="29">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="30" class="">
+      <td>lee</td>
+      <td>-</td>
+      <td>1550</td>
+      <td><a href="https://tronscan.org/#/address/TWDszRyZ7t1fUWMv9nFByLfmTTP1THD3so" target="_blank">TWDszRyZ7t1fUWMv9nFByLfmTTP1THD3so</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/a2078e55ae5c0ef95531a1f2a65a1d94b4574993da95949e04e2fdc8e5dd9288" target="_blank">a2078e55ae...</a></td>
+      <td class="">1550 </td>
+      <td>2025/7/15 14:18:06</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TWDszRyZ7t1fUWMv9nFByLfmTTP1THD3so">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="30">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="31" class="">
+      <td>Johnny</td>
+      <td>-</td>
+      <td>1800</td>
+      <td><a href="https://tronscan.org/#/address/TPy2LGb1M44CPcxLrRYLu1PjeKr4vZXeBe" target="_blank">TPy2LGb1M44CPcxLrRYLu1PjeKr4vZXeBe</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/528b3cd41498a7b66b9d2f834048a4858269aba150a3c00875148dc9fb6becfb" target="_blank">528b3cd414...</a></td>
+      <td class="">1800 </td>
+      <td>2025/7/15 14:18:48</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TPy2LGb1M44CPcxLrRYLu1PjeKr4vZXeBe">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="31">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="32" class="">
+      <td>julie</td>
+      <td>-</td>
+      <td>1500</td>
+      <td><a href="https://tronscan.org/#/address/TGj1x33d93U6RWuofSBaALvLEoAtc7JBdw" target="_blank">TGj1x33d93U6RWuofSBaALvLEoAtc7JBdw</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/cac7da8df8f4fb4278412b9713bdf2737fb384b29152609a799c5adcfe42010e" target="_blank">cac7da8df8...</a></td>
+      <td class="">1500 </td>
+      <td>2025/7/15 14:19:24</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TGj1x33d93U6RWuofSBaALvLEoAtc7JBdw">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="32">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="33" class="">
+      <td>Kaycee</td>
+      <td>-</td>
+      <td>700</td>
+      <td><a href="https://tronscan.org/#/address/TAbKX9XzXrVXogR8gM3YPFXcqjy3f1ewQZ" target="_blank">TAbKX9XzXrVXogR8gM3YPFXcqjy3f1ewQZ</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/305926ff4e42d1437620178a4caf71b7c359d7ed110b01f0b4d2dd7809f3c363" target="_blank">305926ff4e...</a></td>
+      <td class="">700 </td>
+      <td>2025/7/15 14:19:54</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TAbKX9XzXrVXogR8gM3YPFXcqjy3f1ewQZ">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="33">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="34" class="">
+      <td>yy</td>
+      <td>-</td>
+      <td>4150</td>
+      <td><a href="https://tronscan.org/#/address/TH7zncNZQUoM97FHgjQAaTC9sQUWsGagmw" target="_blank">TH7zncNZQUoM97FHgjQAaTC9sQUWsGagmw</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/39ac827b9a085f8bc49fee6fb3f1ac7aea20fbdc590ec8291d4dd0179eb78c3c" target="_blank">39ac827b9a...</a></td>
+      <td class="">4150 </td>
+      <td>2025/7/15 14:20:18</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TH7zncNZQUoM97FHgjQAaTC9sQUWsGagmw">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="34">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="35" class="">
+      <td>Lily</td>
+      <td>-</td>
+      <td>2000</td>
+      <td><a href="https://tronscan.org/#/address/TG7JyLYCrkCgwGB6kk2TQe7r6sDWKskfQ2" target="_blank">TG7JyLYCrkCgwGB6kk2TQe7r6sDWKskfQ2</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/fc46adbecd5f4a5fd6728f7811fabca5f15d3017efef66a4fde4b48c3a61d597" target="_blank">fc46adbecd...</a></td>
+      <td class="">2000 </td>
+      <td>2025/7/15 14:21:12</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TG7JyLYCrkCgwGB6kk2TQe7r6sDWKskfQ2">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="35">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="36" class="">
+      <td>Amei</td>
+      <td>-</td>
+      <td>2600</td>
+      <td><a href="https://tronscan.org/#/address/TPxhTPkwqNPr2DBm39Z6ZhAYt3oK2w79JY" target="_blank">TPxhTPkwqNPr2DBm39Z6ZhAYt3oK2w79JY</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/86c656eed7ef23db23a4f8872adc74e9dd9ff1c47d44819faeb1b751b1c55a07" target="_blank">86c656eed7...</a></td>
+      <td class="">2600 </td>
+      <td>2025/7/15 14:23:54</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TPxhTPkwqNPr2DBm39Z6ZhAYt3oK2w79JY">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="36">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="37" class="other-currency-row">
+      <td>Mark</td>
+      <td>-</td>
+      <td>2000</td>
+      <td><a href="https://tronscan.org/#/address/TMRhczQWYYkZqqor2fJujfPAf8TUGXdrRc" target="_blank">TMRhczQWYYkZqqor2fJujfPAf8TUGXdrRc</a></td>
+      <td class="status-confirmed">手工确认</td>
+      <td><a href="https://tronscan.org/#/transaction/da5775e696a8e3d3638a7c1ece7c07be5eb3feb980695b995da3176249ef2502" target="_blank">da5775e696...</a></td>
+      <td class="">2000 </td>
+      <td>2025/7/23 00:36:06</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TMRhczQWYYkZqqor2fJujfPAf8TUGXdrRc">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="37">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="38" class="">
+      <td>Yonnie</td>
+      <td>-</td>
+      <td>1500</td>
+      <td><a href="https://tronscan.org/#/address/TC38neBnc6ayLvtKD12qG1jQjmVcSPwSUH" target="_blank">TC38neBnc6ayLvtKD12qG1jQjmVcSPwSUH</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/ef45665b65c5f8d259267c1b2db457a8023f1af3f4b52642dc4691659c03f221" target="_blank">ef45665b65...</a></td>
+      <td class="">1500 </td>
+      <td>2025/7/15 13:51:42</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TC38neBnc6ayLvtKD12qG1jQjmVcSPwSUH">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="38">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="39" class="">
+      <td> Spencer</td>
+      <td>-</td>
+      <td>1500</td>
+      <td><a href="https://tronscan.org/#/address/TQnPyVyhgnmVwQF8jFz6r4Ju4e1VyqSkhC" target="_blank">TQnPyVyhgnmVwQF8jFz6r4Ju4e1VyqSkhC</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/da25c6f817b8e4ef7ca98ea7512b7f70255679529b7c8c569622e285105448ed" target="_blank">da25c6f817...</a></td>
+      <td class="">1500 </td>
+      <td>2025/7/15 13:36:27</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TQnPyVyhgnmVwQF8jFz6r4Ju4e1VyqSkhC">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="39">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="40" class="">
+      <td>Yuki</td>
+      <td>-</td>
+      <td>2000</td>
+      <td><a href="https://tronscan.org/#/address/TMW5RsKBe2KjBqC3uiC2jDH7Lmwn2XT4oJ" target="_blank">TMW5RsKBe2KjBqC3uiC2jDH7Lmwn2XT4oJ</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/a4b9dc7bd6878cc1df64eb3079f0092e668d80770ecc5b95b222fa9fe523f17f" target="_blank">a4b9dc7bd6...</a></td>
+      <td class="">2000 </td>
+      <td>2025/7/15 13:35:57</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TMW5RsKBe2KjBqC3uiC2jDH7Lmwn2XT4oJ">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="40">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="41" class="">
+      <td>Carrie</td>
+      <td>-</td>
+      <td>2000</td>
+      <td><a href="https://tronscan.org/#/address/TXtoGLTBQuZdTeYb42biNZfu8p1oaZBjLK" target="_blank">TXtoGLTBQuZdTeYb42biNZfu8p1oaZBjLK</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/574f94ac728fbea6c82eca79e8008b289b426f91a05d66494c6f1a4f1284956f" target="_blank">574f94ac72...</a></td>
+      <td class="">2000 </td>
+      <td>2025/7/15 13:35:18</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TXtoGLTBQuZdTeYb42biNZfu8p1oaZBjLK">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="41">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="42" class="">
+      <td>weekend</td>
+      <td>-</td>
+      <td>1000</td>
+      <td><a href="https://tronscan.org/#/address/TR2JTz5Zc7MWkt8KNxoGvWy38MswQcWDGv" target="_blank">TR2JTz5Zc7MWkt8KNxoGvWy38MswQcWDGv</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/81e42e2e44b770d99685cf506c3cc23184705162239da34dafa60460542e736c" target="_blank">81e42e2e44...</a></td>
+      <td class="">1000 </td>
+      <td>2025/7/15 13:34:42</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TR2JTz5Zc7MWkt8KNxoGvWy38MswQcWDGv">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="42">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="43" class="">
+      <td>zoey</td>
+      <td>-</td>
+      <td>1000</td>
+      <td><a href="https://tronscan.org/#/address/TVCME16AKc3QZxn4ZPiZ14x6sZFzQDccbS" target="_blank">TVCME16AKc3QZxn4ZPiZ14x6sZFzQDccbS</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/957c4babc4807f4621098c76d66d613b401c38f14405fa0d8142a566312ed525" target="_blank">957c4babc4...</a></td>
+      <td class="">1000 </td>
+      <td>2025/7/15 13:34:12</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TVCME16AKc3QZxn4ZPiZ14x6sZFzQDccbS">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="43">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="44" class="">
+      <td>jolin</td>
+      <td>-</td>
+      <td>1500</td>
+      <td><a href="https://tronscan.org/#/address/TRxAPEs6w1v1Lb1eDDwv72L4Ms51DmDY2N" target="_blank">TRxAPEs6w1v1Lb1eDDwv72L4Ms51DmDY2N</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/6c059dc3caaab7d3782447fa63886f854f60c802cb0e3be506832dd47c455d27" target="_blank">6c059dc3ca...</a></td>
+      <td class="">1500 </td>
+      <td>2025/7/15 13:32:54</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TRxAPEs6w1v1Lb1eDDwv72L4Ms51DmDY2N">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="44">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="45" class="">
+      <td>Nancy</td>
+      <td>-</td>
+      <td>1500</td>
+      <td><a href="https://tronscan.org/#/address/TKKZzH6oijZLvwMo3Gs2ZoaiPYYDRixcaF" target="_blank">TKKZzH6oijZLvwMo3Gs2ZoaiPYYDRixcaF</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/c31b482818f6480de7a59df5706ba572152f3eb757bbebc4ab18ea4b633227c4" target="_blank">c31b482818...</a></td>
+      <td class="">1500 </td>
+      <td>2025/7/15 13:32:12</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TKKZzH6oijZLvwMo3Gs2ZoaiPYYDRixcaF">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="45">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="46" class="">
+      <td>Alex</td>
+      <td>-</td>
+      <td>2000</td>
+      <td><a href="https://tronscan.org/#/address/TUADQ4tJdoPp8Mdq1M6ghFnfepy5qJQvHB" target="_blank">TUADQ4tJdoPp8Mdq1M6ghFnfepy5qJQvHB</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/71acf4862aefd68e63b70f3260ab60d1a7326ae02958e8711772fa47ed1877a5" target="_blank">71acf4862a...</a></td>
+      <td class="">2000 </td>
+      <td>2025/7/15 13:31:33</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TUADQ4tJdoPp8Mdq1M6ghFnfepy5qJQvHB">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="46">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="47" class="">
+      <td>moli</td>
+      <td>-</td>
+      <td>1000</td>
+      <td><a href="https://tronscan.org/#/address/TPTic9zzrEXcoRhGJUyAxfAk4tCdsZ9gYS" target="_blank">TPTic9zzrEXcoRhGJUyAxfAk4tCdsZ9gYS</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/ec3760a4b4d386222c01bc59c917bdac4f38993841385dc878724d24949bbe38" target="_blank">ec3760a4b4...</a></td>
+      <td class="">1000 </td>
+      <td>2025/7/15 13:31:00</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TPTic9zzrEXcoRhGJUyAxfAk4tCdsZ9gYS">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="47">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="48" class="">
+      <td>gakpo</td>
+      <td>-</td>
+      <td>1000</td>
+      <td><a href="https://tronscan.org/#/address/TF7vAYrRMR2RHQGnNhEHxGaA2cKrVoF1Vi" target="_blank">TF7vAYrRMR2RHQGnNhEHxGaA2cKrVoF1Vi</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/f6167e841be991813c4cbe0f00e225998037ca99c8bb68ac7016f590b454b080" target="_blank">f6167e841b...</a></td>
+      <td class="">1000 </td>
+      <td>2025/7/15 13:26:06</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TF7vAYrRMR2RHQGnNhEHxGaA2cKrVoF1Vi">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="48">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr data-index="49" class="">
+      <td>zeta</td>
+      <td>-</td>
+      <td>1500</td>
+      <td><a href="https://tronscan.org/#/address/TG5cPWgc1cfAcKHKAPmqsLdHN1C3zwzw6G" target="_blank">TG5cPWgc1cfAcKHKAPmqsLdHN1C3zwzw6G</a></td>
+      <td class="status-confirmed">已确认</td>
+      <td><a href="https://tronscan.org/#/transaction/f3e4f5bb4f2025cc09f4a67f2b34dda3e0741563d0fb0770edd8ebcd85cf886c" target="_blank">f3e4f5bb4f...</a></td>
+      <td class="">1500 </td>
+      <td>2025/7/15 13:21:18</td>
+      <td class="text-center">
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-primary check-transaction" data-address="TG5cPWgc1cfAcKHKAPmqsLdHN1C3zwzw6G">自动检查</button>
+          <button class="btn btn-sm btn-success ms-2 manual-confirm" data-index="49">手工确认</button>
+        </div>
+      </td>
+    </tr>
+  
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      // 客户端JavaScript代码
+      document.addEventListener('DOMContentLoaded', function() {
+        // 搜索功能
+        document.getElementById('search-input').addEventListener('keyup', function() {
+          filterEmployees();
+        });
+        
+        // 其他币种过滤功能
+        document.getElementById('show-other-currency').addEventListener('change', function() {
+          filterEmployees();
+        });
+        
+        // 过滤员工列表
+        function filterEmployees() {
+          const searchValue = document.getElementById('search-input').value.toLowerCase();
+          const showOtherCurrency = document.getElementById('show-other-currency').checked;
+          const rows = document.querySelectorAll('#employee-table tr');
+          
+          rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            const matchesSearch = text.includes(searchValue);
+            const isOtherCurrency = row.classList.contains('other-currency-row');
+            
+            // 如果是其他币种的行，只有在勾选显示其他币种时才显示
+            if (isOtherCurrency && !showOtherCurrency) {
+              row.style.display = 'none';
+            } else {
+              row.style.display = matchesSearch ? '' : 'none';
+            }
+          });
+        }
+
+        // 检查单个交易
+        document.querySelectorAll('.check-transaction').forEach(button => {
+          button.addEventListener('click', async function() {
+            const address = this.getAttribute('data-address');
+            const row = this.closest('tr');
+            const statusCell = row.querySelector('td:nth-child(5)');
+            const hashCell = row.querySelector('td:nth-child(6)');
+            const amountCell = row.querySelector('td:nth-child(7)');
+            const timeCell = row.querySelector('td:nth-child(8)');
+            
+            statusCell.textContent = '检查中...';
+            statusCell.className = '';
+            
+            try {
+              const response = await fetch('/api/check-transaction?address=' + address);
+              const data = await response.json();
+              
+              if (data.success) {
+                if (data.confirmed) {
+                  // 显示金额，并检查是否有差异
+                  const expectedAmount = parseFloat(row.querySelector('td:nth-child(3)').textContent);
+                  const actualAmount = data.amount;
+                  
+                  // 检查金额差异
+                  const hasDifference = data.hasAmountDifference || Math.abs(actualAmount - expectedAmount) > 0.01;
+                  
+                  // 根据是否为当月记录和是否有金额差异设置不同状态
+                  if (hasDifference && data.isCurrentMonth) {
+                    // 当月交易但金额有差异
+                    statusCell.textContent = '金额有差异';
+                    statusCell.className = 'status-confirmed';
+                    row.classList.add('amount-difference-row');
+                    row.classList.remove('not-current-month-row');
+                  } else if (hasDifference && data.notCurrentMonth) {
+                    // 非当月交易且金额有差异
+                    statusCell.textContent = '非当月金额差异';
+                    statusCell.className = 'status-confirmed';
+                    row.classList.add('amount-difference-row');
+                    row.classList.remove('not-current-month-row');
+                  } else if (data.notCurrentMonth && !hasDifference) {
+                    // 非当月交易但金额无差异
+                    statusCell.textContent = '非当月确认';
+                    statusCell.className = 'status-confirmed';
+                    row.classList.add('not-current-month-row');
+                    row.classList.remove('amount-difference-row');
+                  } else {
+                    // 当月交易且金额无差异
+                    statusCell.textContent = '已确认';
+                    statusCell.className = 'status-confirmed';
+                    row.classList.remove('not-current-month-row');
+                    row.classList.remove('amount-difference-row');
+                  }
+                  
+                  hashCell.innerHTML = '<a href="https://tronscan.org/#/transaction/' + data.txHash + '" target="_blank">' + data.txHash.substring(0, 10) + '...</a>';
+                  
+                  // 设置金额显示
+                  if (hasDifference) {
+                    if (actualAmount > expectedAmount) {
+                      amountCell.className = 'amount-higher';
+                      amountCell.textContent = actualAmount + ' (高于预期)';
+                    } else {
+                      amountCell.className = 'amount-lower';
+                      amountCell.textContent = actualAmount + ' (低于预期)';
+                    }
+                  } else {
+                    amountCell.className = '';
+                    amountCell.textContent = actualAmount;
+                  }
+                  
+                  // 显示交易时间
+                  if (data.txTime) {
+                    const txDate = new Date(data.txTime);
+                    timeCell.textContent = txDate.toLocaleString('zh-CN');
+                  } else {
+                    timeCell.textContent = '-';
+                  }
+                  
+                  updateDashboard();
+                } else {
+                  statusCell.textContent = '未找到交易';
+                  statusCell.className = 'status-failed';
+                }
+              } else {
+                statusCell.textContent = '检查失败';
+                statusCell.className = 'status-failed';
+              }
+            } catch (error) {
+              statusCell.textContent = '检查失败';
+              statusCell.className = 'status-failed';
+              console.error('检查交易失败:', error);
+            }
+          });
+        });
+        
+        // 手工确认功能
+        document.querySelectorAll('.manual-confirm').forEach(button => {
+          button.addEventListener('click', function() {
+            const row = this.closest('tr');
+            const statusCell = row.querySelector('td:nth-child(5)');
+            const hashCell = row.querySelector('td:nth-child(6)');
+            const amountCell = row.querySelector('td:nth-child(7)');
+            const timeCell = row.querySelector('td:nth-child(8)');
+            const index = this.getAttribute('data-index');
+            
+            // 弹出确认对话框
+            const confirmResult = confirm('确认此员工已通过其他币种支付工资？');
+            if (confirmResult) {
+              // 禁用按钮，防止重复点击
+              this.disabled = true;
+              this.textContent = '处理中...';
+              
+              statusCell.textContent = '手工确认';
+              statusCell.className = 'status-confirmed';
+              hashCell.textContent = '手工确认 - 其他币种';
+              
+              // 获取当前时间作为手工确认时间
+              const now = new Date();
+              timeCell.textContent = now.toLocaleString('zh-CN');
+              
+              // 显示应发金额作为实收金额
+              const expectedAmount = row.querySelector('td:nth-child(3)').textContent;
+              amountCell.textContent = expectedAmount;
+              
+              // 发送到服务器记录手工确认
+              fetch('/api/manual-confirm', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                  index: index,
+                  confirmTime: now.toISOString()
+                })
+              }).then(response => response.json())
+                .then(data => {
+                  if (data.success) {
+                    console.log('手工确认成功');
+                    updateDashboard();
+                  } else {
+                    console.error('手工确认失败:', data.message);
+                    alert('手工确认失败: ' + data.message);
+                  }
+                  // 恢复按钮状态
+                  this.disabled = false;
+                  this.textContent = '手工确认';
+                })
+                .catch(error => {
+                  console.error('手工确认失败:', error);
+                  alert('手工确认失败，请查看控制台获取详细信息');
+                  // 恢复按钮状态
+                  this.disabled = false;
+                  this.textContent = '手工确认';
+              });
+            }
+          });
+        });
+
+        // 检查所有交易
+        document.getElementById('check-all').addEventListener('click', async function() {
+          this.disabled = true;
+          this.textContent = '检查中...';
+          
+          const buttons = document.querySelectorAll('.check-transaction');
+          let confirmedCount = 0;
+          
+          for (const button of buttons) {
+            const address = button.getAttribute('data-address');
+            const row = button.closest('tr');
+            const statusCell = row.querySelector('td:nth-child(5)');
+            const hashCell = row.querySelector('td:nth-child(6)');
+            
+            statusCell.textContent = '检查中...';
+            statusCell.className = '';
+            
+            try {
+              const response = await fetch('/api/check-transaction?address=' + address);
+              const data = await response.json();
+              
+              if (data.success) {
+                if (data.confirmed) {
+                  // 显示金额，并检查是否有差异
+                  const amountCell = row.querySelector('td:nth-child(7)');
+                  const timeCell = row.querySelector('td:nth-child(8)');
+                  const expectedAmount = parseFloat(row.querySelector('td:nth-child(3)').textContent);
+                  const actualAmount = data.amount;
+                  
+                  // 检查金额差异
+                  const hasDifference = data.hasAmountDifference || Math.abs(actualAmount - expectedAmount) > 0.01;
+                  
+                  // 根据是否为当月记录和是否有金额差异设置不同状态
+                  if (hasDifference && data.isCurrentMonth) {
+                    // 当月交易但金额有差异
+                    statusCell.textContent = '金额有差异';
+                    statusCell.className = 'status-confirmed';
+                    row.classList.add('amount-difference-row');
+                    row.classList.remove('not-current-month-row');
+                  } else if (hasDifference && data.notCurrentMonth) {
+                    // 非当月交易且金额有差异
+                    statusCell.textContent = '非当月金额差异';
+                    statusCell.className = 'status-confirmed';
+                    row.classList.add('amount-difference-row');
+                    row.classList.remove('not-current-month-row');
+                  } else if (data.notCurrentMonth && !hasDifference) {
+                    // 非当月交易但金额无差异
+                    statusCell.textContent = '非当月确认';
+                    statusCell.className = 'status-confirmed';
+                    row.classList.add('not-current-month-row');
+                    row.classList.remove('amount-difference-row');
+                  } else {
+                    // 当月交易且金额无差异
+                    statusCell.textContent = '已确认';
+                    statusCell.className = 'status-confirmed';
+                    row.classList.remove('not-current-month-row');
+                    row.classList.remove('amount-difference-row');
+                    confirmedCount++;
+                  }
+                  
+                  hashCell.innerHTML = '<a href="https://tronscan.org/#/transaction/' + data.txHash + '" target="_blank">' + data.txHash.substring(0, 10) + '...</a>';
+                  
+                  // 设置金额显示
+                  if (hasDifference) {
+                    if (actualAmount > expectedAmount) {
+                      amountCell.className = 'amount-higher';
+                      amountCell.textContent = actualAmount + ' (高于预期)';
+                    } else {
+                      amountCell.className = 'amount-lower';
+                      amountCell.textContent = actualAmount + ' (低于预期)';
+                    }
+                  } else {
+                    amountCell.className = '';
+                    amountCell.textContent = actualAmount;
+                  }
+                  
+                  timeCell.textContent = new Date(data.txTime).toLocaleString('zh-CN');
+                } else {
+                  statusCell.textContent = '未找到交易';
+                  statusCell.className = 'status-failed';
+                }
+              } else {
+                statusCell.textContent = '检查失败';
+                statusCell.className = 'status-failed';
+              }
+            } catch (error) {
+              statusCell.textContent = '检查失败';
+              statusCell.className = 'status-failed';
+              console.error('检查交易失败:', error);
+            }
+            
+            // 添加延迟以避免API限制
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+          
+          this.disabled = false;
+          this.textContent = '检查所有交易';
+          updateDashboard();
+        });
+
+        // 导出报告
+        document.getElementById('export-report').addEventListener('click', function() {
+          const rows = document.querySelectorAll('#employee-table tr');
+          let csv = '员工姓名,部门,岗位,应发金额(USDT),USDT地址,状态,交易哈希\n';
+          
+          rows.forEach(row => {
+            const columns = row.querySelectorAll('td');
+            const rowData = [];
+            
+            columns.forEach((column, index) => {
+              if (index !== 7) { // 跳过"操作"列
+                let text = column.textContent.trim();
+                // 处理链接
+                if (index === 4 || index === 6) {
+                  const link = column.querySelector('a');
+                  text = link ? link.textContent.trim() : text;
+                }
+                rowData.push('"' + text + '"');
+              }
+            });
+            
+            csv += rowData.join(',') + '\n';
+          });
+          
+          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.setAttribute('href', url);
+          link.setAttribute('download', 'usdt_salary_report_' + new Date().toISOString().split('T')[0] + '.csv');
+          link.style.visibility = 'hidden';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        });
+
+        // 更新仪表板
+        function updateDashboard() {
+          const confirmedCount = document.querySelectorAll('.status-confirmed').length;
+          const totalCount = document.getElementById('total-employees').textContent;
+          
+          document.getElementById('confirmed-count').textContent = confirmedCount;
+          document.getElementById('pending-count').textContent = totalCount - confirmedCount;
+        }
+        
+        // 文件上传处理
+        document.getElementById('uploadSubmit').addEventListener('click', async function() {
+          const fileInput = document.getElementById('excelFile');
+          const file = fileInput.files[0];
+          
+          if (!file) {
+            alert('请选择一个Excel文件');
+            return;
+          }
+          
+          if (!file.name.endsWith('.xlsx')) {
+            alert('请选择.xlsx格式的Excel文件');
+            return;
+          }
+          
+          // 禁用按钮，显示上传状态
+          this.disabled = true;
+          this.textContent = '上传中...';
+          
+          const formData = new FormData();
+          formData.append('excelFile', file);
+          
+          try {
+            const response = await fetch('/api/upload-excel', {
+              method: 'POST',
+              body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+              alert('文件上传成功！页面将刷新以显示新数据。');
+              // 关闭模态框
+              const modal = bootstrap.Modal.getInstance(document.getElementById('uploadModal'));
+              modal.hide();
+              // 刷新页面以显示新数据
+              window.location.reload();
+            } else {
+              alert('上传失败：' + result.message);
+            }
+          } catch (error) {
+            console.error('上传失败:', error);
+            alert('上传失败，请检查网络连接或文件格式');
+          } finally {
+            // 恢复按钮状态
+            this.disabled = false;
+            this.textContent = '上传并导入';
+          }
+        });
+        
+        // 重置文件输入框当模态框关闭时
+        document.getElementById('uploadModal').addEventListener('hidden.bs.modal', function() {
+          document.getElementById('excelFile').value = '';
+        });
+      });
+    </script>
+  </body>
+  </html>
+  

@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  usdt-monitor:
+    build: .
+    container_name: usdt-salary-monitor
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/app/data
+      - ./uploads:/app/uploads
+      - ./employee_data.json:/app/employee_data.json:ro
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - usdt-network
+
+  # 可选：添加Nginx反向代理
+  nginx:
+    image: nginx:alpine
+    container_name: usdt-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - usdt-monitor
+    networks:
+      - usdt-network
+
+  # 可选：添加Redis缓存
+  redis:
+    image: redis:alpine
+    container_name: usdt-redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    networks:
+      - usdt-network
+
+networks:
+  usdt-network:
+    driver: bridge
+
+volumes:
+  redis_data:
