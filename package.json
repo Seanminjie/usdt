@@ -7,7 +7,10 @@
     "start": "node usdt_monitor.js",
     "dev": "node usdt_monitor.js",
     "install-deps": "npm install",
-    "convert-excel": "node read_excel.js"
+    "convert-excel": "node read_excel.js",
+    "check-version": "node version-checker.js",
+    "update": "node version-checker.js --auto-update",
+    "version-check": "node version-checker.js"
   },
   "dependencies": {
     "axios": "1.6.0",
