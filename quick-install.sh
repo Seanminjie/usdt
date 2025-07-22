@@ -41,9 +41,17 @@ check_root() {
     if [[ $EUID -eq 0 ]]; then
         print_message "检测到root权限，将安装系统服务"
         IS_ROOT=true
+        # 检查是否在Docker容器中或sudo命令是否可用
+        if [ -f /.dockerenv ] || ! command -v sudo &> /dev/null; then
+            print_warning "检测到容器环境或sudo不可用，直接使用root权限"
+            USE_SUDO=""
+        else
+            USE_SUDO="sudo"
+        fi
     else
         print_warning "非root用户，将跳过系统服务安装"
         IS_ROOT=false
+        USE_SUDO=""
         INSTALL_DIR="$HOME/usdt-monitor"
     fi
 }
@@ -98,15 +106,15 @@ install_node() {
     if [[ "$OS" == "linux" ]]; then
         if [[ "$DISTRO" == "debian" ]]; then
             # Ubuntu/Debian
-            curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-            sudo apt-get install -y nodejs
+            curl -fsSL https://deb.nodesource.com/setup_18.x | ${USE_SUDO} bash -
+            ${USE_SUDO} apt-get install -y nodejs
         elif [[ "$DISTRO" == "rhel" ]]; then
             # CentOS/RHEL/Fedora
-            curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
-            sudo yum install -y nodejs npm
+            curl -fsSL https://rpm.nodesource.com/setup_18.x | ${USE_SUDO} bash -
+            ${USE_SUDO} yum install -y nodejs npm
         elif [[ "$DISTRO" == "arch" ]]; then
             # Arch Linux
-            sudo pacman -S nodejs npm
+            ${USE_SUDO} pacman -S nodejs npm
         else
             print_error "不支持的Linux发行版，请手动安装Node.js v18+"
             exit 1
@@ -136,15 +144,15 @@ create_install_dir() {
     if [ -d "$INSTALL_DIR" ]; then
         print_warning "目录已存在，备份旧版本..."
         if [[ "$IS_ROOT" == true ]]; then
-            sudo mv "$INSTALL_DIR" "${INSTALL_DIR}.backup.$(date +%Y%m%d_%H%M%S)"
+            ${USE_SUDO} mv "$INSTALL_DIR" "${INSTALL_DIR}.backup.$(date +%Y%m%d_%H%M%S)"
         else
             mv "$INSTALL_DIR" "${INSTALL_DIR}.backup.$(date +%Y%m%d_%H%M%S)"
         fi
     fi
     
     if [[ "$IS_ROOT" == true ]]; then
-        sudo mkdir -p "$INSTALL_DIR"
-        sudo chown $USER:$USER "$INSTALL_DIR"
+        ${USE_SUDO} mkdir -p "$INSTALL_DIR"
+        ${USE_SUDO} chown $USER:$USER "$INSTALL_DIR"
     else
         mkdir -p "$INSTALL_DIR"
     fi
@@ -252,7 +260,7 @@ create_service() {
     print_step "创建系统服务..."
     
     # 创建systemd服务文件
-    sudo tee /etc/systemd/system/${SERVICE_NAME}.service > /dev/null << EOF
+    ${USE_SUDO} tee /etc/systemd/system/${SERVICE_NAME}.service > /dev/null << EOF
 [Unit]
 Description=USDT Salary Monitor System
 After=network.target
@@ -277,8 +285,8 @@ WantedBy=multi-user.target
 EOF
 
     # 重新加载systemd并启用服务
-    sudo systemctl daemon-reload
-    sudo systemctl enable ${SERVICE_NAME}
+    ${USE_SUDO} systemctl daemon-reload
+    ${USE_SUDO} systemctl enable ${SERVICE_NAME}
     
     print_message "系统服务创建完成"
 }
@@ -294,12 +302,12 @@ configure_firewall() {
     
     # 检查并配置ufw
     if command -v ufw >/dev/null 2>&1; then
-        sudo ufw allow ${APP_PORT}/tcp
+        ${USE_SUDO} ufw allow ${APP_PORT}/tcp
         print_message "UFW防火墙规则已添加"
     # 检查并配置firewalld
     elif command -v firewall-cmd >/dev/null 2>&1; then
-        sudo firewall-cmd --permanent --add-port=${APP_PORT}/tcp
-        sudo firewall-cmd --reload
+        ${USE_SUDO} firewall-cmd --permanent --add-port=${APP_PORT}/tcp
+        ${USE_SUDO} firewall-cmd --reload
         print_message "Firewalld防火墙规则已添加"
     else
         print_warning "未检测到防火墙管理工具，请手动开放端口 ${APP_PORT}"
@@ -314,14 +322,14 @@ start_service() {
     
     if [[ "$IS_ROOT" == true ]] && [ -f "/etc/systemd/system/${SERVICE_NAME}.service" ]; then
         # 使用systemd启动
-        sudo systemctl start ${SERVICE_NAME}
+        ${USE_SUDO} systemctl start ${SERVICE_NAME}
         
         # 检查服务状态
-        if sudo systemctl is-active --quiet ${SERVICE_NAME}; then
+        if ${USE_SUDO} systemctl is-active --quiet ${SERVICE_NAME}; then
             print_message "系统服务启动成功"
         else
             print_error "系统服务启动失败"
-            sudo systemctl status ${SERVICE_NAME}
+            ${USE_SUDO} systemctl status ${SERVICE_NAME}
         fi
     else
         # 直接启动
@@ -345,11 +353,19 @@ show_result() {
     
     if [[ "$IS_ROOT" == true ]]; then
         print_message "系统服务管理命令:"
-        echo "  启动服务: sudo systemctl start ${SERVICE_NAME}"
-        echo "  停止服务: sudo systemctl stop ${SERVICE_NAME}"
-        echo "  重启服务: sudo systemctl restart ${SERVICE_NAME}"
-        echo "  查看状态: sudo systemctl status ${SERVICE_NAME}"
-        echo "  查看日志: sudo journalctl -u ${SERVICE_NAME} -f"
+        if [ "$USE_SUDO" != "" ]; then
+            echo "  启动服务: sudo systemctl start ${SERVICE_NAME}"
+            echo "  停止服务: sudo systemctl stop ${SERVICE_NAME}"
+            echo "  重启服务: sudo systemctl restart ${SERVICE_NAME}"
+            echo "  查看状态: sudo systemctl status ${SERVICE_NAME}"
+            echo "  查看日志: sudo journalctl -u ${SERVICE_NAME} -f"
+        else
+            echo "  启动服务: systemctl start ${SERVICE_NAME}"
+            echo "  停止服务: systemctl stop ${SERVICE_NAME}"
+            echo "  重启服务: systemctl restart ${SERVICE_NAME}"
+            echo "  查看状态: systemctl status ${SERVICE_NAME}"
+            echo "  查看日志: journalctl -u ${SERVICE_NAME} -f"
+        fi
     else
         print_message "启动命令:"
         echo "  cd $INSTALL_DIR && npm start"

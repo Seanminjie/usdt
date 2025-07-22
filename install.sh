@@ -55,7 +55,13 @@ check_root() {
         USE_SUDO=""
     else
         echo -e "${GREEN}以管理员权限运行${NC}"
-        USE_SUDO="sudo"
+        # 检查是否在Docker容器中或sudo命令是否可用
+        if [ -f /.dockerenv ] || ! command -v sudo &> /dev/null; then
+            echo -e "${YELLOW}检测到容器环境或sudo不可用，直接使用root权限${NC}"
+            USE_SUDO=""
+        else
+            USE_SUDO="sudo"
+        fi
     fi
 }
 
