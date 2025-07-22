@@ -2,20 +2,20 @@
 chcp 65001 >nul
 setlocal enabledelayedexpansion
 
-:: USDT工资监控系统 v1.3.0 Windows一键安装脚本
+:: USDT工资监控系统 v1.3.1 Windows一键安装脚本
 :: 支持 Windows 10/11
 
-title USDT工资监控系统 v1.3.0 - 一键安装
+title USDT工资监控系统 v1.3.1 - 一键安装
 
 echo ========================================
-echo   USDT工资监控系统 v1.3.0
+echo   USDT工资监控系统 v1.3.1
 echo   Windows 一键安装脚本
 echo ========================================
 echo.
 
 :: 设置变量
 set "PROJECT_NAME=usdt-salary-monitor"
-set "PROJECT_VERSION=1.3.0"
+set "PROJECT_VERSION=1.3.1"
 set "INSTALL_DIR=%USERPROFILE%\usdt-monitor"
 set "GITHUB_REPO=https://github.com/Seanminjie/usdt.git"
 
@@ -171,7 +171,7 @@ echo [!] 创建 package.json...
 (
 echo {
 echo   "name": "usdt-salary-monitor",
-echo   "version": "1.3.0",
+echo   "version": "1.3.1",
 echo   "description": "USDT工资监控系统 - 监控和分析员工USDT工资接收情况的工具",
 echo   "main": "usdt_monitor.js",
 echo   "scripts": {

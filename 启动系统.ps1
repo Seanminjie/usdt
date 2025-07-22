@@ -48,7 +48,7 @@ function Write-Info {
 
 Clear-Host
 Write-ColorText "========================================" "Green"
-Write-ColorText "  USDT工资监控系统 v1.3.0 - PowerShell启动工具" "Green"
+Write-ColorText "  USDT工资监控系统 v1.3.1 - PowerShell启动工具" "Green"
 Write-ColorText "========================================" "Green"
 Write-Host ""
 Write-ColorText "当前工作目录: $(Get-Location)" "Gray"

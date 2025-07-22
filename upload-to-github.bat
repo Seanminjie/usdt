@@ -7,7 +7,7 @@ REM 目标仓库: https://github.com/Seanminjie/usdt.git
 title USDT工资监控系统 v1.3.0 - GitHub上传
 
 echo ======================================
-echo USDT工资监控系统 v1.3.0 - GitHub上传
+echo USDT工资监控系统 v1.3.1 - GitHub上传
 echo ======================================
 echo.
 
@@ -120,7 +120,7 @@ if %errorLevel% neq 0 (
 
 REM 提交更改
 echo [STEP] 提交更改...
-git commit -m "feat: USDT工资监控系统 v1.3.0 完整版
+git commit -m "feat: USDT工资监控系统 v1.3.1 完整版
 
 🚀 新功能:
 - 一条命令安装支持 (Linux/macOS/Windows)

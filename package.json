@@ -1,7 +1,7 @@
 {
   "name": "usdt-salary-monitor",
-  "version": "1.3.0",
-  "description": "USDT工资监控系统 - 监控和分析员工USDT工资接收情况的工具",
+  "version": "1.3.1",
+  "description": "USDT工资监控系统 v1.3.1 - 监控和分析员工USDT工资接收情况的工具，支持在线Excel上传、智能状态颜色、自适应布局、批量检查等功能",
   "main": "usdt_monitor.js",
   "scripts": {
     "start": "node usdt_monitor.js",
@@ -10,10 +10,10 @@
     "convert-excel": "node read_excel.js"
   },
   "dependencies": {
-    "axios": "^1.6.0",
-    "express": "^4.18.2",
-    "multer": "^1.4.5-lts.1",
-    "xlsx": "^0.18.5"
+    "axios": "1.6.0",
+    "express": "4.18.2",
+    "multer": "1.4.5",
+    "xlsx": "0.18.5"
   },
   "engines": {
     "node": ">=14.0.0"
@@ -26,8 +26,21 @@
     "tron",
     "excel",
     "upload",
-    "responsive"
+    "responsive",
+    "status-colors",
+    "batch-check",
+    "manual-confirm",
+    "bootstrap",
+    "web-interface"
   ],
   "author": "USDT Monitor Team",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Seanminjie/usdt.git"
+  },
+  "homepage": "https://github.com/Seanminjie/usdt#readme",
+  "bugs": {
+    "url": "https://github.com/Seanminjie/usdt/issues"
+  }
 }

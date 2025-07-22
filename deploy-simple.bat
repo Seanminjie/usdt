@@ -2,13 +2,13 @@
 chcp 65001 >nul
 setlocal enabledelayedexpansion
 
-REM USDT工资监控系统 v1.3.0 - SSH密钥部署脚本
+REM USDT工资监控系统 v1.3.1 - SSH密钥部署脚本
 REM 目标仓库: git@github.com:Seanminjie/usdt.git
 
-title USDT工资监控系统 v1.3.0 - SSH部署
+title USDT工资监控系统 v1.3.1 - SSH部署
 
 echo ======================================
-echo USDT工资监控系统 v1.3.0 - SSH部署
+echo USDT工资监控系统 v1.3.1 - SSH部署
 echo ======================================
 echo.
 
@@ -123,7 +123,7 @@ if %errorLevel% neq 0 (
 
 REM 提交更改
 echo [STEP] 提交更改...
-git commit -m "feat: USDT工资监控系统 v1.3.0 完整版 - 一条命令安装支持 - Docker容器化部署 - 在线Excel文件上传 - 智能状态颜色区分 - 自适应响应式布局 - 批量交易检查 - 手工确认功能 - 健康检查API端点"
+git commit -m "feat: USDT工资监控系统 v1.3.1 完整版 - 一条命令安装支持 - Docker容器化部署 - 在线Excel文件上传 - 智能状态颜色区分 - 自适应响应式布局 - 批量交易检查 - 手工确认功能 - 健康检查API端点"
 
 if %errorLevel% == 0 (
     echo [INFO] 提交完成

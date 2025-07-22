@@ -7,7 +7,7 @@ REM 目标仓库: git@github.com:Seanminjie/usdt.git
 title USDT工资监控系统 v1.3.0 - SSH部署
 
 echo ======================================
-echo USDT工资监控系统 v1.3.0 - SSH部署
+echo USDT工资监控系统 v1.3.1 - SSH部署
 echo ======================================
 echo.
 

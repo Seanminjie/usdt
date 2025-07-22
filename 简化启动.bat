@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul
-title USDT工资监控系统 v1.3.0 - 简化启动工具
+title USDT工资监控系统 v1.3.1 - 简化启动工具
 color 0A
 
 echo.

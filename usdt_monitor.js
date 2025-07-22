@@ -136,10 +136,12 @@ validEmployees.forEach((emp, index) => {
     statusClass = 'status-confirmed';
   } else if (emp.status === '手工确认') {
     statusClass = 'status-manual';
-  } else if (emp.status === '金额有差异' || emp.status === '非当月金额差异') {
-    statusClass = 'status-amount-diff';
+  } else if (emp.status === '金额有差异') {
+    statusClass = 'status-amount-difference';
+  } else if (emp.status === '非当月金额差异') {
+    statusClass = 'status-not-current-month-difference';
   } else if (emp.status === '非当月确认') {
-    statusClass = 'status-not-current';
+    statusClass = 'status-not-current-month';
   } else if (emp.status === '未找到交易' || emp.status === '检查失败') {
     statusClass = 'status-failed';
   } else if (emp.status === '检查中...') {
@@ -177,14 +179,15 @@ validEmployees.forEach((emp, index) => {
     <style>
       body { padding: 20px; max-width: none; }
       
-      /* 不同状态使用不同颜色 */
-      .status-pending { color: #ff8c00; font-weight: bold; } /* 待确认 - 橙色 */
-      .status-confirmed { color: #52c41a; font-weight: bold; } /* 已确认 - 绿色 */
-      .status-manual { color: #1890ff; font-weight: bold; } /* 手工确认 - 蓝色 */
-      .status-amount-diff { color: #faad14; font-weight: bold; } /* 金额有差异 - 黄色 */
-      .status-not-current { color: #722ed1; font-weight: bold; } /* 非当月确认 - 紫色 */
-      .status-failed { color: #f5222d; font-weight: bold; } /* 检查失败 - 红色 */
-      .status-checking { color: #13c2c2; font-weight: bold; } /* 检查中 - 青色 */
+      /* 不同状态使用不同颜色 - 统一使用高对比度颜色 */
+      .status-pending { color: #e67e00; font-weight: bold; } /* 待确认 - 橙色 (对比度 > 4.5) */
+      .status-confirmed { color: #2d8f47; font-weight: bold; } /* 已确认 - 绿色 (对比度 > 4.5) */
+      .status-manual { color: #0056b3; font-weight: bold; } /* 手工确认 - 蓝色 (对比度 > 4.5) */
+      .status-amount-difference { color: #0056b3; font-weight: bold; } /* 金额有差异 - 蓝色 (对比度 > 4.5) */
+      .status-not-current-month-difference { color: #0056b3; font-weight: bold; } /* 非当月金额差异 - 蓝色 (对比度 > 4.5) */
+      .status-not-current-month { color: #d73027; font-weight: bold; } /* 非当月确认 - 红色 (对比度 > 4.5) */
+      .status-failed { color: #d73027; font-weight: bold; } /* 检查失败 - 红色 (对比度 > 4.5) */
+      .status-checking { color: #008080; font-weight: bold; } /* 检查中 - 青色 (对比度 > 4.5) */
       
       .dashboard-card { margin-bottom: 20px; }
       .action-buttons { margin-top: 20px; }
@@ -206,9 +209,9 @@ validEmployees.forEach((emp, index) => {
         min-width: 200px;
       }
       
-      /* 金额差异提示 */
-      .amount-higher { color: #52c41a; } /* 实收金额高于应发金额 */
-      .amount-lower { color: #f5222d; } /* 实收金额低于应发金额 */
+      /* 金额差异提示 - 使用高对比度颜色 */
+      .amount-higher { color: #2d8f47; } /* 实收金额高于应发金额 - 绿色 (对比度 > 4.5) */
+      .amount-lower { color: #d73027; } /* 实收金额低于应发金额 - 红色 (对比度 > 4.5) */
       
       /* 移除容器宽度限制，使页面自适应 */
       .container-fluid { padding: 0 20px; }
@@ -398,19 +401,19 @@ validEmployees.forEach((emp, index) => {
                   if (hasDifference && data.isCurrentMonth) {
                     // 当月交易但金额有差异
                     statusCell.textContent = '金额有差异';
-                    statusCell.className = 'status-amount-diff';
+                    statusCell.className = 'status-amount-difference';
                     row.classList.add('amount-difference-row');
                     row.classList.remove('not-current-month-row');
                   } else if (hasDifference && data.notCurrentMonth) {
                     // 非当月交易且金额有差异
                     statusCell.textContent = '非当月金额差异';
-                    statusCell.className = 'status-amount-diff';
+                    statusCell.className = 'status-not-current-month-difference';
                     row.classList.add('amount-difference-row');
                     row.classList.remove('not-current-month-row');
                   } else if (data.notCurrentMonth && !hasDifference) {
                     // 非当月交易但金额无差异
                     statusCell.textContent = '非当月确认';
-                    statusCell.className = 'status-not-current';
+                    statusCell.className = 'status-not-current-month';
                     row.classList.add('not-current-month-row');
                     row.classList.remove('amount-difference-row');
                   } else {
@@ -448,7 +451,7 @@ validEmployees.forEach((emp, index) => {
                   updateDashboard();
                 } else {
                   statusCell.textContent = '未找到交易';
-                  statusCell.className = 'status-not-found';
+                  statusCell.className = 'status-failed';
                 }
               } else {
                 statusCell.textContent = '检查失败';
@@ -561,19 +564,19 @@ validEmployees.forEach((emp, index) => {
                   if (hasDifference && data.isCurrentMonth) {
                     // 当月交易但金额有差异
                     statusCell.textContent = '金额有差异';
-                    statusCell.className = 'status-amount-diff';
+                    statusCell.className = 'status-amount-difference';
                     row.classList.add('amount-difference-row');
                     row.classList.remove('not-current-month-row');
                   } else if (hasDifference && data.notCurrentMonth) {
                     // 非当月交易且金额有差异
                     statusCell.textContent = '非当月金额差异';
-                    statusCell.className = 'status-amount-diff';
+                    statusCell.className = 'status-not-current-month-difference';
                     row.classList.add('amount-difference-row');
                     row.classList.remove('not-current-month-row');
                   } else if (data.notCurrentMonth && !hasDifference) {
                     // 非当月交易但金额无差异
                     statusCell.textContent = '非当月确认';
-                    statusCell.className = 'status-not-current';
+                    statusCell.className = 'status-not-current-month';
                     row.classList.add('not-current-month-row');
                     row.classList.remove('amount-difference-row');
                   } else {

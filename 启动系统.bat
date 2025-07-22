@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul
-title USDT工资监控系统 v1.3.0 - 一键启动工具
+title USDT工资监控系统 v1.3.1 - 一键启动工具
 color 0A
 
 :: 添加错误处理
@@ -8,7 +8,7 @@ setlocal enabledelayedexpansion
 
 echo.
 echo ========================================
-echo   USDT工资监控系统 v1.3.0 - 一键启动工具
+echo   USDT工资监控系统 v1.3.1 - 一键启动工具
 echo ========================================
 echo.
 echo 当前工作目录: %CD%
@@ -141,7 +141,7 @@ echo ✅ 环境准备完成
 
 :: 启动系统
 echo.
-echo [5/5] 启动USDT工资监控系统 v1.3.0...
+echo [5/5] 启动USDT工资监控系统 v1.3.1...
 echo.
 echo 🚀 系统正在启动，请稍候...
 echo.

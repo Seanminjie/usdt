@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# USDT工资监控系统 v1.3.0 - SSH密钥部署脚本
+# USDT工资监控系统 v1.3.1 - SSH密钥部署脚本
 # 目标仓库: git@github.com:Seanminjie/usdt.git
 
 set -e

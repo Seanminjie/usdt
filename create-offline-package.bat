@@ -7,7 +7,7 @@ setlocal enabledelayedexpansion
 title USDT工资监控系统 - 创建离线安装包
 
 echo ========================================
-echo   创建离线安装包 v1.3.0
+echo   创建离线安装包 v1.3.1
 echo ========================================
 echo.
 

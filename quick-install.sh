@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# USDT工资监控系统 v1.3.0 - 一键安装脚本
+# USDT工资监控系统 v1.3.1 - 一键安装脚本
 # 支持 Linux/Unix/macOS 系统
 # 使用方法: curl -fsSL https://raw.githubusercontent.com/your-repo/usdt-monitor/main/quick-install.sh | bash
 
@@ -343,7 +343,7 @@ start_service() {
 show_result() {
     echo
     echo "=================================="
-    print_message "USDT工资监控系统 v1.3.0 安装完成!"
+    print_message "USDT工资监控系统 v1.3.1 安装完成!"
     echo "=================================="
     echo
     print_message "安装目录: $INSTALL_DIR"
@@ -384,7 +384,7 @@ show_result() {
 # 主安装流程
 main() {
     echo "=================================="
-    print_message "USDT工资监控系统 v1.3.0 一键安装"
+    print_message "USDT工资监控系统 v1.3.1 一键安装"
     echo "=================================="
     echo
     

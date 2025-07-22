@@ -1,4 +1,4 @@
-# USDT工资监控系统 v1.3.0 - 一条命令安装指南
+# USDT工资监控系统 v1.3.1 - 一条命令安装指南
 
 ## 🚀 一条命令安装
 
@@ -138,11 +138,11 @@ docker-compose up -d
 # 1. 在有网络的机器上创建离线包
 ./create-offline-package.sh
 
-# 2. 将生成的 usdt-monitor-v1.3.0-offline.tar.gz 传输到目标服务器
+# 2. 将生成的 usdt-monitor-v1.3.1-offline.tar.gz 传输到目标服务器
 
-# 3. 在目标服务器上解压并安装
-tar -xzf usdt-monitor-v1.3.0-offline.tar.gz
-cd usdt-monitor-v1.3.0-offline
+```bash
+tar -xzf usdt-monitor-v1.3.1-offline.tar.gz
+cd usdt-monitor-v1.3.1-offline
 ./install-offline.sh
 ```
 

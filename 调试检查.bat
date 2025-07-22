@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul
-title 调试信息 - USDT监控系统
+title USDT工资监控系统 v1.3.1 - 调试检查工具
 color 0E
 
 echo.

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# USDT工资监控系统 - Linux/Mac 一键启动脚本
+# USDT工资监控系统 v1.3.1 - Linux/macOS启动脚本
 
 # 设置颜色
 RED='\033[0;31m'

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# USDT工资监控系统 v1.3.0 一键安装脚本
+# USDT工资监控系统 v1.3.1 一键安装脚本
 # 支持 Ubuntu/Debian/CentOS/RHEL/macOS
 
 set -e
@@ -14,7 +14,7 @@ NC='\033[0m' # No Color
 
 # 项目信息
 PROJECT_NAME="usdt-salary-monitor"
-PROJECT_VERSION="1.3.0"
+PROJECT_VERSION="1.3.1"
 GITHUB_REPO="https://github.com/Seanminjie/usdt.git"
 INSTALL_DIR="/opt/usdt-monitor"
 SERVICE_NAME="usdt-monitor"
